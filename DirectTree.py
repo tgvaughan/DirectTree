@@ -81,18 +81,29 @@ if __name__ == '__main__':
 
     seqs = readFASTA(args.fasta)
 
-    lineage0 = Lineage(seqs.values()[0])
-    print lineage0.getHD(0, seqs.values()[1])
-
     L = len(seqs.values()[0])
 
-    T = None
-    while True:
-        T = exponential(0.01)
+    print "T"
+    for s in range(1000):
+        lineage0 = Lineage(seqs.values()[0])
+        T = 0.1
         h = lineage0.getHD(T, seqs.values()[1])
-        p = probHD(h, T, L)/1e-70
-        print p
-        if uniform() < p:
-            break
+        P = probHD(h, T, L)*np.e**(-T)
 
-    print h,T
+        for iter in range(100):
+            #Tp = T + uniform(-0.001,0.001)
+            f = uniform(0.8, 1.0/0.8)
+            Tp = T*f
+
+            if Tp<0:
+                alpha = 0
+            else:
+                hp = lineage0.getHD(Tp, seqs.values()[1])
+                Pp = probHD(hp, Tp, L)*np.e**(-Tp)
+                alpha = min(Pp/P/f, 1.0)
+
+            if alpha == 1 or (alpha > 0 and uniform()<alpha):
+                T = Tp
+                P = Pp
+
+        print T
