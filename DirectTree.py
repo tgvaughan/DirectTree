@@ -4,8 +4,10 @@ from argparse import ArgumentParser, FileType
 from sys import stdout
 
 import numpy as np
-from numpy.random import exponential, choice, uniform
+from numpy.random import exponential, uniform, randint
 from scipy.special import binom
+
+from matplotlib import pyplot as plt
 
 class Lineage:
     def __init__(self, sequence, parent=None, height=float("inf")):
@@ -27,8 +29,8 @@ class Lineage:
                 if (t > height):
                     break
 
-                i = choice(len(self.sequence))
-                self.ancSeq[i] = (self.ancSeq[i] + choice(range(1,4))) % 4
+                i = randint(len(self.sequence))
+                self.ancSeq[i] = (self.ancSeq[i] + randint(1,4)) % 4
                 self.subs.append((t, i, self.ancSeq[i]))
 
         self.maxHeight = height
@@ -51,10 +53,9 @@ class Lineage:
 
 def logProbHD(h, t, L):
     """Probability of evolving to sequence h away from start in time t."""
-    p = 0.75*(1.0-np.e**(-t*4.0/3.0))
+    p = 0.25*(1.0-np.e**(-t*4.0/3.0))
 
-    #return binom(L,h)*((1-p)**(L-h))*(p**h)
-    return (L-h)*np.log(1-p) + h*np.log(p)
+    return (L-h)*np.log(1-3*p) + h*np.log(p)
 
 
 def readFASTA(inFile):
@@ -93,13 +94,19 @@ if __name__ == '__main__':
         h = lineage0.getHD(T, seqs.values()[1])
         logP = logProbHD(h, T, L) - T/args.theta
 
+        #Tvec = [T]
+
         for iter in range(200):
-            #Tp = T + uniform(-0.001,0.001)
-            f = uniform(0.8, 1.0/0.8)
+
+            if (uniform() < 0.5):
+                f = uniform(0.5, 1.0/0.5)
+            else:
+                f = uniform(0.9, 1.0/0.9)
+
             Tp = T*f
 
             if Tp<0:
-                alpha = float('-inf')
+                logalpha = float('-inf')
             else:
                 hp = lineage0.getHD(Tp, seqs.values()[1])
                 logPp = logProbHD(hp, Tp, L) - Tp/args.theta
@@ -108,6 +115,10 @@ if __name__ == '__main__':
             if logalpha>0  or uniform()<np.e**logalpha:
                 T = Tp
                 logP = logPp
-
+    
+            #Tvec.append(T)
         args.outfile.write(str(T) + "\n")
         args.outfile.flush()
+
+    #plt.plot(range(len(Tvec)), Tvec)
+    #plt.show()

@@ -42,6 +42,7 @@
                     <parameter name="popSize" idref="popSize"/>
                 </populationModel>
             </distribution>
+            
             <distribution id='likelihood' idref="treeLikelihood"/>
 
             <distribution spec="CompoundDistribution" id="priors">
